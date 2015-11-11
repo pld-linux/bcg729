@@ -1,15 +1,19 @@
 Summary:	ITU G729 Annex A speech codec library
 Summary(pl.UTF-8):	Biblioteka kodeka mowy ITU G729 Annex A
 Name:		bcg729
-Version:	1.0.0
-Release:	3
+Version:	1.0.1
+Release:	1
 License:	GPL v2+, ITU G729 patent license may be required
 Group:		Libraries
 Source0:	http://download-mirror.savannah.gnu.org/releases/linphone/plugins/sources/%{name}-%{version}.tar.gz
-# Source0-md5:	45e127a9a309aff94d3262d97b5aeab0
+# Source0-md5:	c4dc6c09c71850f0b392772f519f1d19
+Patch0:		%{name}-lib.patch
 URL:		http://www.linphone.org/eng/documentation/dev/bcg729.html
-BuildRequires:	mediastreamer-devel >= 2.0.0
-BuildRequires:	ortp-devel >= 0.16.0
+BuildRequires:	autoconf >= 2.63
+BuildRequires:	automake
+BuildRequires:	libtool >= 2:2
+BuildRequires:	mediastreamer-devel >= 2.9.0
+BuildRequires:	ortp-devel >= 0.21.0
 BuildRequires:	pkgconfig
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
@@ -62,7 +66,7 @@ Summary:	ITU G729 Annex A speech codec for mediastreamer
 Summary(pl.UTF-8):	Kodek mowy ITU G729 Annex A dla mediastreamera
 Group:		Libraries
 Requires:	%{name} = %{version}-%{release}
-Requires:	mediastreamer >= 2.0.0
+Requires:	mediastreamer >= 2.9.0
 
 %description -n mediastreamer-plugin-msbcg729
 This package supplies the mediastreamer plugin for the ITU G729 Annex
@@ -74,8 +78,14 @@ Annex A.
 
 %prep
 %setup -q
+%patch0 -p1
 
 %build
+%{__libtoolize}
+%{__aclocal} -I m4
+%{__autoconf}
+%{__autoheader}
+%{__automake}
 %configure \
 	--disable-silent-rules
 
