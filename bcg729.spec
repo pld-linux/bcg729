@@ -2,7 +2,7 @@ Summary:	ITU G729 Annex A speech codec library
 Summary(pl.UTF-8):	Biblioteka kodeka mowy ITU G729 Annex A
 Name:		bcg729
 Version:	1.0.2
-Release:	1
+Release:	2
 License:	GPL v2+, ITU G729 patent license may be required
 Group:		Libraries
 Source0:	http://download-mirror.savannah.gnu.org/releases/linphone/plugins/sources/%{name}-%{version}.tar.gz
