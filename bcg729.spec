@@ -1,3 +1,7 @@
+#
+# Conditional build:
+%bcond_without	mediastreamer	# mediastreamer plugin
+
 Summary:	ITU G729 Annex A speech codec library
 Summary(pl.UTF-8):	Biblioteka kodeka mowy ITU G729 Annex A
 Name:		bcg729
@@ -12,8 +16,8 @@ URL:		http://www.linphone.org/eng/documentation/dev/bcg729.html
 BuildRequires:	autoconf >= 2.63
 BuildRequires:	automake
 BuildRequires:	libtool >= 2:2
-BuildRequires:	mediastreamer-devel >= 2.9.0
-BuildRequires:	ortp-devel >= 0.21.0
+%{?with_mediastreamer:BuildRequires:	mediastreamer-devel >= 2.9.0}
+%{?with_mediastreamer:BuildRequires:	ortp-devel >= 0.21.0}
 BuildRequires:	pkgconfig
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
@@ -87,6 +91,7 @@ Annex A.
 %{__autoheader}
 %{__automake}
 %configure \
+	%{!?with_mediastreamer:--disable-msplugin} \
 	--disable-silent-rules
 
 %{__make}
@@ -124,6 +129,8 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(644,root,root,755)
 %{_libdir}/libbcg729.a
 
+%if %{with mediastreamer}
 %files -n mediastreamer-plugin-msbcg729
 %defattr(644,root,root,755)
 %attr(755,root,root) %{_libdir}/mediastreamer/plugins/libmsbcg729.so*
+%endif
