@@ -13,10 +13,9 @@ Group:		Libraries
 Source0:	https://gitlab.linphone.org/BC/public/bcg729/-/archive/%{version}/%{name}-%{version}.tar.bz2
 # Source0-md5:	23b0c28422df3251adbc81e596ef9861
 URL:		http://www.linphone.org/technical-corner/bcg729
-BuildRequires:	autoconf >= 2.63
-BuildRequires:	automake
-BuildRequires:	libtool >= 2:2
+BuildRequires:	cmake >= 3.1
 BuildRequires:	pkgconfig
+BuildRequires:	rpmbuild(macros) >= 1.745
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
 %description
@@ -66,29 +65,20 @@ Statyczna biblioteka bcg729.
 %prep
 %setup -q
 
-# required by configure
-touch bcg729.spec.in
-
 %build
-%{__libtoolize}
-%{__aclocal} -I m4
-%{__autoconf}
-%{__autoheader}
-%{__automake}
-%configure \
-	--disable-silent-rules \
-	%{!?with_static_libs:--disable-static}
+install -d build
+cd build
+%cmake .. \
+	-DCMAKE_INSTALL_LIBDIR=%{_lib} \
+	%{!?with_static_libs:-DENABLE_STATIC=OFF}
 
 %{__make}
 
 %install
 rm -rf $RPM_BUILD_ROOT
 
-%{__make} install \
+%{__make} -C build install \
 	DESTDIR=$RPM_BUILD_ROOT
-
-# obsoleted by pkg-config
-%{__rm} $RPM_BUILD_ROOT%{_libdir}/libbcg729.la
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -99,14 +89,15 @@ rm -rf $RPM_BUILD_ROOT
 %files
 %defattr(644,root,root,755)
 %doc AUTHORS.md CHANGELOG.md README.md
-%attr(755,root,root) %{_libdir}/libbcg729.so.*.*.*
-%attr(755,root,root) %ghost %{_libdir}/libbcg729.so.0
+%attr(755,root,root) %{_libdir}/libbcg729.so.0
 
 %files devel
 %defattr(644,root,root,755)
 %attr(755,root,root) %{_libdir}/libbcg729.so
 %{_includedir}/bcg729
 %{_pkgconfigdir}/libbcg729.pc
+%dir %{_datadir}/Bcg729
+%{_datadir}/Bcg729/cmake
 
 %if %{with static_libs}
 %files static
