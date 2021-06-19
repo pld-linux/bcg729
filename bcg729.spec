@@ -1,23 +1,21 @@
 #
 # Conditional build:
-%bcond_without	mediastreamer	# mediastreamer plugin
+%bcond_without	static_libs	# static library
 
 Summary:	ITU G729 Annex A speech codec library
 Summary(pl.UTF-8):	Biblioteka kodeka mowy ITU G729 Annex A
 Name:		bcg729
-Version:	1.0.2
-Release:	2
-License:	GPL v2+, ITU G729 patent license may be required
+Version:	1.1.1
+Release:	1
+License:	GPL v3+
 Group:		Libraries
-Source0:	http://download-mirror.savannah.gnu.org/releases/linphone/plugins/sources/%{name}-%{version}.tar.gz
-# Source0-md5:	2a3d9b422912024f97a41e56e9e3d357
-Patch0:		%{name}-lib.patch
-URL:		http://www.linphone.org/eng/documentation/dev/bcg729.html
+#Source0Download: https://gitlab.linphone.org/BC/public/bcg729/tags
+Source0:	https://gitlab.linphone.org/BC/public/bcg729/-/archive/%{version}/%{name}-%{version}.tar.bz2
+# Source0-md5:	23b0c28422df3251adbc81e596ef9861
+URL:		http://www.linphone.org/technical-corner/bcg729
 BuildRequires:	autoconf >= 2.63
 BuildRequires:	automake
 BuildRequires:	libtool >= 2:2
-%{?with_mediastreamer:BuildRequires:	mediastreamer-devel >= 2.9.0}
-%{?with_mediastreamer:BuildRequires:	ortp-devel >= 0.21.0}
 BuildRequires:	pkgconfig
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
@@ -65,24 +63,11 @@ Static bcg729 library.
 %description static -l pl.UTF-8
 Statyczna biblioteka bcg729.
 
-%package -n mediastreamer-plugin-msbcg729
-Summary:	ITU G729 Annex A speech codec for mediastreamer
-Summary(pl.UTF-8):	Kodek mowy ITU G729 Annex A dla mediastreamera
-Group:		Libraries
-Requires:	%{name} = %{version}-%{release}
-Requires:	mediastreamer >= 2.9.0
-
-%description -n mediastreamer-plugin-msbcg729
-This package supplies the mediastreamer plugin for the ITU G729 Annex
-A speech codec.
-
-%description -n mediastreamer-plugin-msbcg729 -l pl.UTF-8
-Ten pakiet udostępnia wtyczkę mediastreamera do kodeka mowy ITU G729
-Annex A.
-
 %prep
 %setup -q
-%patch0 -p1
+
+# required by configure
+touch bcg729.spec.in
 
 %build
 %{__libtoolize}
@@ -91,8 +76,8 @@ Annex A.
 %{__autoheader}
 %{__automake}
 %configure \
-	%{!?with_mediastreamer:--disable-msplugin} \
-	--disable-silent-rules
+	--disable-silent-rules \
+	%{!?with_static_libs:--disable-static}
 
 %{__make}
 
@@ -102,8 +87,6 @@ rm -rf $RPM_BUILD_ROOT
 %{__make} install \
 	DESTDIR=$RPM_BUILD_ROOT
 
-# dlopened plugin
-%{__rm} $RPM_BUILD_ROOT%{_libdir}/mediastreamer/plugins/libmsbcg729.{la,a}
 # obsoleted by pkg-config
 %{__rm} $RPM_BUILD_ROOT%{_libdir}/libbcg729.la
 
@@ -115,7 +98,7 @@ rm -rf $RPM_BUILD_ROOT
 
 %files
 %defattr(644,root,root,755)
-%doc AUTHORS README
+%doc AUTHORS.md CHANGELOG.md README.md
 %attr(755,root,root) %{_libdir}/libbcg729.so.*.*.*
 %attr(755,root,root) %ghost %{_libdir}/libbcg729.so.0
 
@@ -125,12 +108,8 @@ rm -rf $RPM_BUILD_ROOT
 %{_includedir}/bcg729
 %{_pkgconfigdir}/libbcg729.pc
 
+%if %{with static_libs}
 %files static
 %defattr(644,root,root,755)
 %{_libdir}/libbcg729.a
-
-%if %{with mediastreamer}
-%files -n mediastreamer-plugin-msbcg729
-%defattr(644,root,root,755)
-%attr(755,root,root) %{_libdir}/mediastreamer/plugins/libmsbcg729.so*
 %endif
