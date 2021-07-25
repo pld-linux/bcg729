@@ -1,24 +1,21 @@
 #
 # Conditional build:
-%bcond_without	mediastreamer	# mediastreamer plugin
+%bcond_without	static_libs	# static library
 
 Summary:	ITU G729 Annex A speech codec library
 Summary(pl.UTF-8):	Biblioteka kodeka mowy ITU G729 Annex A
 Name:		bcg729
-Version:	1.0.2
-Release:	3
-License:	GPL v2+, ITU G729 patent license may be required
+Version:	1.1.1
+Release:	1
+License:	GPL v3+
 Group:		Libraries
-Source0:	http://download-mirror.savannah.gnu.org/releases/linphone/plugins/sources/%{name}-%{version}.tar.gz
-# Source0-md5:	2a3d9b422912024f97a41e56e9e3d357
-Patch0:		%{name}-lib.patch
-URL:		http://www.linphone.org/eng/documentation/dev/bcg729.html
-BuildRequires:	autoconf >= 2.63
-BuildRequires:	automake
-BuildRequires:	libtool >= 2:2
-%{?with_mediastreamer:BuildRequires:	mediastreamer-devel >= 2.9.0}
-%{?with_mediastreamer:BuildRequires:	ortp-devel >= 0.21.0}
+#Source0Download: https://gitlab.linphone.org/BC/public/bcg729/tags
+Source0:	https://gitlab.linphone.org/BC/public/bcg729/-/archive/%{version}/%{name}-%{version}.tar.bz2
+# Source0-md5:	23b0c28422df3251adbc81e596ef9861
+URL:		http://www.linphone.org/technical-corner/bcg729
+BuildRequires:	cmake >= 3.1
 BuildRequires:	pkgconfig
+BuildRequires:	rpmbuild(macros) >= 1.745
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
 %description
@@ -65,47 +62,26 @@ Static bcg729 library.
 %description static -l pl.UTF-8
 Statyczna biblioteka bcg729.
 
-%package -n mediastreamer-plugin-msbcg729
-Summary:	ITU G729 Annex A speech codec for mediastreamer
-Summary(pl.UTF-8):	Kodek mowy ITU G729 Annex A dla mediastreamera
-Group:		Libraries
-Requires:	%{name} = %{version}-%{release}
-Requires:	mediastreamer >= 2.9.0
-
-%description -n mediastreamer-plugin-msbcg729
-This package supplies the mediastreamer plugin for the ITU G729 Annex
-A speech codec.
-
-%description -n mediastreamer-plugin-msbcg729 -l pl.UTF-8
-Ten pakiet udostępnia wtyczkę mediastreamera do kodeka mowy ITU G729
-Annex A.
-
 %prep
 %setup -q
-%patch0 -p1
 
 %build
-%{__libtoolize}
-%{__aclocal} -I m4
-%{__autoconf}
-%{__autoheader}
-%{__automake}
-%configure \
-	%{!?with_mediastreamer:--disable-msplugin} \
-	--disable-silent-rules
+install -d build
+cd build
+%cmake .. \
+	-DCMAKE_INSTALL_LIBDIR=%{_lib} \
+	%{!?with_static_libs:-DENABLE_STATIC=OFF}
 
 %{__make}
 
 %install
 rm -rf $RPM_BUILD_ROOT
 
-%{__make} install \
+%{__make} -C build install \
 	DESTDIR=$RPM_BUILD_ROOT
 
-# dlopened plugin
-%{__rm} $RPM_BUILD_ROOT%{_libdir}/mediastreamer/plugins/libmsbcg729.{la,a}
-# obsoleted by pkg-config
-%{__rm} $RPM_BUILD_ROOT%{_libdir}/libbcg729.la
+# disable completeness check incompatible with split packaging
+%{__sed} -i -e '/^foreach(target .*IMPORT_CHECK_TARGETS/,/^endforeach/d; /^unset(_IMPORT_CHECK_TARGETS)/d' $RPM_BUILD_ROOT%{_datadir}/Bcg729/cmake/Bcg729Targets.cmake
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -115,22 +91,19 @@ rm -rf $RPM_BUILD_ROOT
 
 %files
 %defattr(644,root,root,755)
-%doc AUTHORS README
-%attr(755,root,root) %{_libdir}/libbcg729.so.*.*.*
-%attr(755,root,root) %ghost %{_libdir}/libbcg729.so.0
+%doc AUTHORS.md CHANGELOG.md README.md
+%attr(755,root,root) %{_libdir}/libbcg729.so.0
 
 %files devel
 %defattr(644,root,root,755)
 %attr(755,root,root) %{_libdir}/libbcg729.so
 %{_includedir}/bcg729
 %{_pkgconfigdir}/libbcg729.pc
+%dir %{_datadir}/Bcg729
+%{_datadir}/Bcg729/cmake
 
+%if %{with static_libs}
 %files static
 %defattr(644,root,root,755)
 %{_libdir}/libbcg729.a
-
-%if %{with mediastreamer}
-%files -n mediastreamer-plugin-msbcg729
-%defattr(644,root,root,755)
-%attr(755,root,root) %{_libdir}/mediastreamer/plugins/libmsbcg729.so*
 %endif
