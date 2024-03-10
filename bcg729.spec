@@ -6,14 +6,15 @@ Summary:	ITU G729 Annex A speech codec library
 Summary(pl.UTF-8):	Biblioteka kodeka mowy ITU G729 Annex A
 Name:		bcg729
 Version:	1.1.1
-Release:	1
+Release:	2
 License:	GPL v3+
 Group:		Libraries
 #Source0Download: https://gitlab.linphone.org/BC/public/bcg729/tags
 Source0:	https://gitlab.linphone.org/BC/public/bcg729/-/archive/%{version}/%{name}-%{version}.tar.bz2
 # Source0-md5:	23b0c28422df3251adbc81e596ef9861
-URL:		http://www.linphone.org/technical-corner/bcg729
-BuildRequires:	cmake >= 3.1
+Patch0:		%{name}-git.patch
+URL:		https://www.linphone.org/technical-corner/bcg729
+BuildRequires:	cmake >= 3.22
 BuildRequires:	pkgconfig
 BuildRequires:	rpmbuild(macros) >= 1.745
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -64,24 +65,32 @@ Statyczna biblioteka bcg729.
 
 %prep
 %setup -q
+%patch0 -p1
 
 %build
-install -d build
-cd build
-%cmake .. \
+%if %{with static_libs}
+%cmake -B builddir-static \
 	-DCMAKE_INSTALL_LIBDIR=%{_lib} \
-	%{!?with_static_libs:-DENABLE_STATIC=OFF}
+	-DBUILD_SHARED_LIBS=OFF
 
-%{__make}
+%{__make} -C builddir-static
+%endif
+
+%cmake -B builddir \
+	-DCMAKE_INSTALL_LIBDIR=%{_lib}
+
+%{__make} -C builddir
 
 %install
 rm -rf $RPM_BUILD_ROOT
 
-%{__make} -C build install \
+%if %{with static_libs}
+%{__make} -C builddir-static install \
 	DESTDIR=$RPM_BUILD_ROOT
+%endif
 
-# disable completeness check incompatible with split packaging
-%{__sed} -i -e '/^foreach(target .*IMPORT_CHECK_TARGETS/,/^endforeach/d; /^unset(_IMPORT_CHECK_TARGETS)/d' $RPM_BUILD_ROOT%{_datadir}/Bcg729/cmake/Bcg729Targets.cmake
+%{__make} -C builddir install \
+	DESTDIR=$RPM_BUILD_ROOT
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -99,8 +108,8 @@ rm -rf $RPM_BUILD_ROOT
 %attr(755,root,root) %{_libdir}/libbcg729.so
 %{_includedir}/bcg729
 %{_pkgconfigdir}/libbcg729.pc
-%dir %{_datadir}/Bcg729
-%{_datadir}/Bcg729/cmake
+%dir %{_datadir}/BCG729
+%{_datadir}/BCG729/cmake
 
 %if %{with static_libs}
 %files static
